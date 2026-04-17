@@ -1,0 +1,47 @@
+cabal-version:      2.4
+name:               mfis-quickcheck-expr
+version:            0.1.0.0
+synopsis:           Proiect MFIS despre QuickCheck pe un mini-limbaj aritmetic
+description:        Proiect universitar pentru Metode Formale in Ingineria Software.
+license:            BSD-3-Clause
+license-file:       LICENSE
+author:             Alexandru
+maintainer:         alexn@example.com
+build-type:         Simple
+
+common warnings
+  ghc-options: -Wall -Wcompat -Widentities -Wincomplete-record-updates -Wincomplete-uni-patterns -Wredundant-constraints
+  default-language: Haskell2010
+
+library
+  import: warnings
+  hs-source-dirs: src
+  exposed-modules:
+      Expr
+      Eval
+      Pretty
+      Parser
+      Simplify
+  build-depends:
+      base >=4.14 && <5,
+      containers >=0.6 && <0.8
+
+executable mfis-quickcheck-expr
+  import: warnings
+  hs-source-dirs: app
+  main-is: Main.hs
+  build-depends:
+      base >=4.14 && <5,
+      containers >=0.6 && <0.8,
+      mfis-quickcheck-expr
+
+test-suite spec
+  import: warnings
+  type: exitcode-stdio-1.0
+  hs-source-dirs: test
+  main-is: Spec.hs
+  build-depends:
+      base >=4.14 && <5,
+      containers >=0.6 && <0.8,
+      QuickCheck >=2.14 && <3,
+      mfis-quickcheck-expr
