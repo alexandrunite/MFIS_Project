@@ -8,12 +8,13 @@ module Expr
   , substitute
   ) where
 
+-- sa nu avem variabile duplicate
 import Data.Set (Set)
 import qualified Data.Set as Set
 
 type VarName = String
 
--- | Algebraic syntax tree for arithmetic expressions.
+-- | Asta defineste arborele de expresie.
 data Expr
   = Const Int
   | Var VarName
@@ -23,7 +24,7 @@ data Expr
   | Neg Expr
   deriving (Eq, Ord, Show)
 
--- | Total number of nodes in the tree.
+-- | nr total de noduri in arbore
 size :: Expr -> Int
 size expr =
   case expr of
@@ -34,7 +35,7 @@ size expr =
     Mul a b -> 1 + size a + size b
     Neg e -> 1 + size e
 
--- | Maximum nesting level of the expression.
+-- adancimea maxima a expresiei, cat de adanc eeste arborele
 depth :: Expr -> Int
 depth expr =
   case expr of
@@ -45,7 +46,7 @@ depth expr =
     Mul a b -> 1 + max (depth a) (depth b)
     Neg e -> 1 + depth e
 
--- | Number of operator nodes (binary plus unary).
+-- count de cate noduri operator apar in expresie
 operatorCount :: Expr -> Int
 operatorCount expr =
   case expr of
@@ -56,7 +57,7 @@ operatorCount expr =
     Mul a b -> 1 + operatorCount a + operatorCount b
     Neg e -> 1 + operatorCount e
 
--- | Collect all free variables mentioned in an expression.
+-- cate variabile libere apar in expresie
 freeVars :: Expr -> Set VarName
 freeVars expr =
   case expr of
@@ -67,8 +68,8 @@ freeVars expr =
     Mul a b -> Set.union (freeVars a) (freeVars b)
     Neg e -> freeVars e
 
--- | Substitute every occurrence of a variable with another expression.
--- There are no binders in this language, so capture is not a concern.
+-- | inlocuim o variabila cu o alte expresie, ex substitute nume replacement expresie
+-- substitutia e simpla, pt ca nu exista variabile capture
 substitute :: VarName -> Expr -> Expr -> Expr
 substitute name replacement expr =
   case expr of
@@ -80,3 +81,15 @@ substitute name replacement expr =
     Sub a b -> Sub (substitute name replacement a) (substitute name replacement b)
     Mul a b -> Mul (substitute name replacement a) (substitute name replacement b)
     Neg e -> Neg (substitute name replacement e)
+
+
+
+-- fie expresia 1 * x + -(-y)
+-- expresia de mai sus poate fi scrisa ca un arbore in felul urmator:
+  --       Add
+  --      /   \
+  --    Mul    Neg
+  --   /   \    |
+  -- 1      x   Neg
+  --             |
+  --             y
