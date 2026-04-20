@@ -11,9 +11,11 @@ import Pretty
 import Simplify
 import Test.QuickCheck
 
+-- Setul de nume folosit cand QuickCheck genereaza variabile
 variablePool :: [String]
 variablePool = ["x", "y", "z", "u", "v", "w", "a", "b", "c"]
 
+-- Generam mai des numere mici, ca exemplele sa ramana usor de inteles
 genSmallInt :: Gen Int
 genSmallInt =
   frequency
@@ -21,6 +23,7 @@ genSmallInt =
     , (1, chooseInt (-12, 12))
     ]
 
+-- Expresiile inchise nu depind de niciun mediu extern
 genClosedExpr :: Gen Expr
 genClosedExpr = sized go
   where
@@ -42,6 +45,7 @@ genClosedExpr = sized go
       let rightSize = n - 1 - leftSize
       ctor <$> go leftSize <*> go rightSize
 
+-- Generatorul general produce atat constante, cat si variabile
 genExpr :: Gen Expr
 genExpr = sized go
   where
@@ -74,6 +78,7 @@ instance Arbitrary Expr where
   arbitrary = genExpr
   shrink = shrinkExpr
 
+-- shrink simplifica un contraexemplu atunci cand un test esueaza
 shrinkExpr :: Expr -> [Expr]
 shrinkExpr expr =
   case expr of
@@ -99,8 +104,11 @@ genEnvFor expr = do
   values <- vectorOf (length names) genSmallInt
   pure (Map.fromList (zip names values))
 
+-- Construim automat un mediu compatibil cu variabilele expresiei
 withEnv :: Expr -> (Env -> Property) -> Property
 withEnv expr = forAll (genEnvFor expr)
+
+-- ===== Corectitudine semantica =====
 
 prop_simplifyPreservesMeaning :: Expr -> Property
 prop_simplifyPreservesMeaning expr =
@@ -121,6 +129,8 @@ prop_prettyParsePreservesMeaning expr =
       Just parsed ->
         eval env parsed === eval env expr
 
+-- ===== Proprietati structurale ale simplificarii =====
+
 prop_simplifyIdempotent :: Expr -> Bool
 prop_simplifyIdempotent expr =
   simplify (simplify expr) == simplify expr
@@ -136,6 +146,8 @@ prop_simplifyDoesNotIncreaseDepth expr =
 prop_simplifyDoesNotIncreaseOperators :: Expr -> Bool
 prop_simplifyDoesNotIncreaseOperators expr =
   operatorCount (simplify expr) <= operatorCount expr
+
+-- ===== Comutativitate si asociativitate =====
 
 prop_addCommutative :: Expr -> Expr -> Property
 prop_addCommutative a b =
@@ -159,6 +171,8 @@ prop_mulAssociative a b c =
   withEnv (Mul (Mul a b) c) $ \env ->
     eval env (Mul (Mul a b) c) === eval env (Mul a (Mul b c))
 
+-- ===== Elemente neutre si absorbante =====
+
 prop_addZeroIdentity :: Expr -> Property
 prop_addZeroIdentity expr =
   withEnv expr $ \env ->
@@ -176,6 +190,8 @@ prop_mulZeroAbsorbing expr =
   withEnv expr $ \env ->
     eval env (Mul expr (Const 0)) === Just 0
 
+-- ===== Negatie si scadere =====
+
 prop_subSelfZero :: Expr -> Property
 prop_subSelfZero expr =
   withEnv expr $ \env ->
@@ -185,6 +201,8 @@ prop_doubleNegation :: Expr -> Property
 prop_doubleNegation expr =
   withEnv expr $ \env ->
     eval env (Neg (Neg expr)) === eval env expr
+
+-- ===== Substitutie =====
 
 prop_substituteClosedPreservesMeaning :: Expr -> Property
 prop_substituteClosedPreservesMeaning expr =
@@ -197,6 +215,7 @@ prop_substituteClosedPreservesMeaning expr =
           let env' = Map.insert "x" value env
            in eval env (substitute "x" closedReplacement expr) === eval env' expr
 
+-- Folosim aceleasi setari QuickCheck pentru comparatie intre proprietati
 runProperty :: Testable prop => String -> prop -> IO ()
 runProperty descriere prop = do
   putStrLn ("-- " ++ descriere)

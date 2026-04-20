@@ -8,13 +8,14 @@ module Expr
   , substitute
   ) where
 
--- sa nu avem variabile duplicate
+-- folosim Set ca sa nu apara variabile duplicate in freeVars
 import Data.Set (Set)
 import qualified Data.Set as Set
 
+-- un nume de variabila este doar un sir de caractere
 type VarName = String
 
--- | Asta defineste arborele de expresie.
+-- AST-ul: fiecare constructor reprezinta un tip de nod in arborele de expresie
 data Expr
   = Const Int
   | Var VarName
@@ -24,7 +25,7 @@ data Expr
   | Neg Expr
   deriving (Eq, Ord, Show)
 
--- | nr total de noduri in arbore
+-- nr total de noduri in arbore
 size :: Expr -> Int
 size expr =
   case expr of
@@ -35,7 +36,7 @@ size expr =
     Mul a b -> 1 + size a + size b
     Neg e -> 1 + size e
 
--- adancimea maxima a expresiei, cat de adanc eeste arborele
+-- adancimea maxima a arborelui: cat de adanc este ramura cea mai lunga
 depth :: Expr -> Int
 depth expr =
   case expr of
@@ -46,7 +47,7 @@ depth expr =
     Mul a b -> 1 + max (depth a) (depth b)
     Neg e -> 1 + depth e
 
--- count de cate noduri operator apar in expresie
+-- numarul de noduri operator din expresie (Add, Sub, Mul, Neg)
 operatorCount :: Expr -> Int
 operatorCount expr =
   case expr of
@@ -68,8 +69,7 @@ freeVars expr =
     Mul a b -> Set.union (freeVars a) (freeVars b)
     Neg e -> freeVars e
 
--- | inlocuim o variabila cu o alte expresie, ex substitute nume replacement expresie
--- substitutia e simpla, pt ca nu exista variabile capture
+-- Inlocuim o variabila cu o alta expresie in tot arborele
 substitute :: VarName -> Expr -> Expr -> Expr
 substitute name replacement expr =
   case expr of
@@ -81,15 +81,3 @@ substitute name replacement expr =
     Sub a b -> Sub (substitute name replacement a) (substitute name replacement b)
     Mul a b -> Mul (substitute name replacement a) (substitute name replacement b)
     Neg e -> Neg (substitute name replacement e)
-
-
-
--- fie expresia 1 * x + -(-y)
--- expresia de mai sus poate fi scrisa ca un arbore in felul urmator:
-  --       Add
-  --      /   \
-  --    Mul    Neg
-  --   /   \    |
-  -- 1      x   Neg
-  --             |
-  --             y

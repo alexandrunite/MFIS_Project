@@ -9,12 +9,14 @@ import Parser
 import Pretty
 import Simplify
 
+-- Expresie demo pentru a prezenta toate modulele
 demoExpr :: Expr
 demoExpr =
   Add
     (Mul (Const 1) (Var "x"))
     (Neg (Neg (Var "y")))
 
+-- Mediul de evaluare pentru variabilele din exemplu
 demoEnv :: Env
 demoEnv = Map.fromList [("x", 4), ("y", 7)]
 
@@ -30,6 +32,7 @@ main = do
   putStrLn ("Valoare in mediu: " ++ show (eval demoEnv demoExpr))
   putStrLn ("Expresie simplificata: " ++ pretty (simplify demoExpr))
   putStrLn ("Valoare simplificata: " ++ show (eval demoEnv (simplify demoExpr)))
+  -- Verificam ca pretty printer-ul si parserul merg impreuna
   case parseExpr (pretty demoExpr) of
     Nothing ->
       putStrLn "Parser: eroare la parsarea expresiei pretty-printed"

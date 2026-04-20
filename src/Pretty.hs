@@ -4,9 +4,12 @@ module Pretty
 
 import Expr
 
+-- Punctul de intrare: pornim cu contextul 0 (nicio prioritate exterioara)
 pretty :: Expr -> String
 pretty = prettyPrec 0
 
+-- ctx este prioritatea operatorului parinte; daca expresia curenta are
+-- prioritate mai mica, o inconjuram cu paranteze
 prettyPrec :: Int -> Expr -> String
 prettyPrec ctx expr =
   case expr of
@@ -20,6 +23,7 @@ prettyPrec ctx expr =
     Mul a b ->
       wrapIf (ctx > mulPrec) (prettyPrec mulPrec a ++ " * " ++ prettyPrec (mulPrec + 1) b)
   where
+    -- valorile de precedenta: mai mare inseamna leaga mai tare
     atomPrec = 11
     negPrec = 9
     mulPrec = 7
@@ -29,6 +33,7 @@ prettyPrec ctx expr =
     wrapIf True s = "(" ++ s ++ ")"
     wrapIf False s = s
 
+    -- constantele negative necesita paranteze ca sa nu fie confundate cu Sub
     prettyConst :: Int -> String
     prettyConst n
       | n < 0 = "(" ++ show n ++ ")"
