@@ -6,8 +6,6 @@ module Eval
   , eval
   ) where
 
--- importam modulul de mai jos pt combinarea valorilor Maybe
-import Control.Applicative (liftA2)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 

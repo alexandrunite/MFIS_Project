@@ -1,91 +1,123 @@
 # MFIS QuickCheck Expr
 
-Proiectul implementeaza un mini-limbaj de expresii aritmetice in Haskell si il foloseste pentru testare property-based cu QuickCheck.
+Proiect pentru Metode Formale in Ingineria Software (tema 20): testarea property-based a unui modul software scris in Haskell, folosind QuickCheck.
 
-## Ce face proiectul
+Modulul testat este un mini-limbaj de expresii aritmetice. Proprietatile formale verifica semantica, simplificarea algebrica si round-trip-ul prin pretty-printer si parser.
 
-- defineste un AST pentru expresii aritmetice
-- evalueaza expresii intr-un mediu `Map String Int`
-- simplifica expresii prin reguli algebrice
-- le afiseaza cu un pretty printer
-- le parseaza inapoi din text
-- testeaza proprietati formale cu QuickCheck
+## Structura proiectului
 
-## Structura
-
-- `app/Main.hs` - demo simplu
-- `src/Expr.hs` - AST si functii auxiliare
-- `src/Eval.hs` - evaluator sigur
-- `src/Simplify.hs` - simplificator / optimizer
-- `src/Pretty.hs` - pretty printer
-- `src/Parser.hs` - parser simplu cu `ReadP`
-- `test/Spec.hs` - proprietati QuickCheck
-- `Raport.md` - raportul proiectului
-- `Prezentare-outline.md` - structura pentru prezentare
-
-## Instalare dependinte
-
-Proiectul foloseste `cabal`. In mod normal ai nevoie de:
-
-- GHC
-- Cabal
-- pachetul `QuickCheck` (este descarcat automat de `cabal`)
-
-Daca ai GHCup instalat, poti folosi:
-
-```bash
-ghcup install ghc
-ghcup install cabal
+```
+src/
+  Expr.hs          -- AST si functii auxiliare (size, depth, freeVars, substitute)
+  Eval.hs          -- evaluator sigur: Env -> Expr -> Maybe Int
+  Simplify.hs      -- simplificator algebric (x*0->0, x+0->x, --x->x etc.)
+  Pretty.hs        -- pretty printer cu prioritati corecte
+  Parser.hs        -- parser text -> Expr (round-trip cu Pretty)
+app/
+  Main.hs          -- demo: afiseaza o expresie, o evalueaza, o simplifica
+test/
+  Spec.hs          -- 16 proprietati QuickCheck + generatoare proprii
+Raport.md          -- raportul complet al proiectului
+Prezentare-outline.md -- structura slide-urilor pentru prezentare
 ```
 
-## Build
+## Cerinte
 
-Din radacina proiectului:
+- GHC 9.6.7
+- Cabal 3.14+
+- pachetul `QuickCheck` (descarcat automat de cabal)
 
-```bash
+### Instalare cu GHCup (Windows)
+
+Daca nu ai GHC instalat, descarca `ghcup.exe` si ruleaza:
+
+```
+ghcup install ghc recommended
+ghcup set ghc recommended
+ghcup install cabal recommended
+ghcup set cabal recommended
+```
+
+Dupa instalare, `ghc.exe` si `cabal.exe` se gasesc in `C:\ghcup\bin\`.
+
+## Comenzi
+
+Toate comenzile se ruleaza din radacina proiectului (`d:\MFIS_Project`).
+
+### Descarca dependintele (prima rulare)
+
+```
+cabal update
+```
+
+### Build
+
+```
 cabal build
 ```
 
-## Rulare
+### Demo (afiseaza o expresie, evalueaza, simplifica, parseaza)
 
-Rulare aplicatie demo:
-
-```bash
+```
 cabal run mfis-quickcheck-expr
 ```
 
-## Testare
+Output exemplu:
+```
+Proiect MFIS: QuickCheck pe un mini-limbaj aritmetic
 
-Ruleaza proprietatile QuickCheck:
+Expresie originala: 1 * x + -(-y)
+Dimensiune: 7
+Adancime: 4
+Numar operatori: 4
+Variabile libere: ["x","y"]
+Valoare in mediu: Just 11
+Expresie simplificata: x + y
+Valoare simplificata: Just 11
+Expresie parsata din text: 1 * x + -(-y)
+Semantica pastrata: True
+```
 
-```bash
+### Testare (ruleaza toate proprietatile QuickCheck)
+
+```
 cabal test
 ```
 
-Sau, daca vrei doar testul suite-ului:
+Output exemplu:
+```
+=== Testare QuickCheck: Mini-limbaj de expresii aritmetice ===
 
-```bash
-cabal test spec
+-- Simplificarea pastreaza semantica
++++ OK, passed 120 tests:
+62.5% cu variabile
+37.5% fara variabile
+30.0% expresie mare (>8 noduri)
+
+-- Adunarea este comutativa
++++ OK, passed 120 tests:
+57.5% expresii mari
+17.5% expresii mici
+
+[... toate 16 proprietati: PASS]
 ```
 
-## Exemple utile
+### Testare cu output detaliat
 
-Afiseaza demo-ul si vezi simplificarea si parsarea aceleiasi expresii:
-
-```bash
-cabal run mfis-quickcheck-expr
 ```
-
-Ruleaza testele cu detalii directe:
-
-```bash
 cabal test spec --test-show-details=direct
 ```
 
-## Cum poti extinde proiectul
+## Proprietatile testate
 
-1. Adauga expresii booleene si comparatii.
-2. Introdu variabile cu tipuri diferite sau medii mai complexe.
-3. Scrie un parser mai serios, de exemplu cu Megaparsec.
-4. Extinde simplificatorul cu reguli mai avansate.
-5. Compara doi interpretoare diferite pentru acelasi limbaj.
+| Grupare | Proprietate |
+|---|---|
+| Corectitudine semantica | Simplificarea pastreaza semantica |
+| Corectitudine semantica | Pretty-print + parsare pastreaza semantica |
+| Structurale | Simplificarea este idempotenta |
+| Structurale | Simplificarea nu mareste dimensiunea / adancimea / nr. operatori |
+| Algebrice | Adunarea si inmultirea sunt comutative |
+| Algebrice | Adunarea si inmultirea sunt asociative |
+| Neutre / absorbante | 0 neutru la adunare, 1 neutru la inmultire, 0 absorbant la inmultire |
+| Negatie si scadere | Dubla negatie, scaderea cu sine insusi |
+| Substitutie | Substitutia pastreaza semantica |

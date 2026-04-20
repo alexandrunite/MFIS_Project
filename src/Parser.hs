@@ -30,22 +30,22 @@ atomP = negConstP +++ parens exprP +++ integerP +++ variableP
 
 negP :: ReadP Expr
 negP = do
-  symbol "-"
+  _ <- symbol "-"
   Neg <$> factorP
 
 negConstP :: ReadP Expr
 negConstP = do
-  symbol "("
-  symbol "-"
+  _ <- symbol "("
+  _ <- symbol "-"
   n <- naturalP
-  symbol ")"
+  _ <- symbol ")"
   pure (Const (-n))
 
 parens :: ReadP a -> ReadP a
 parens p = do
-  symbol "("
+  _ <- symbol "("
   x <- p
-  symbol ")"
+  _ <- symbol ")"
   pure x
 
 addOp :: ReadP (Expr -> Expr -> Expr)

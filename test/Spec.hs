@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-orphans #-}
 module Main where
 
 import qualified Data.Map.Strict as Map
@@ -103,15 +104,20 @@ withEnv expr = forAll (genEnvFor expr)
 
 prop_simplifyPreservesMeaning :: Expr -> Property
 prop_simplifyPreservesMeaning expr =
+  classify (Set.null (freeVars expr)) "fara variabile" $
+  classify (not (Set.null (freeVars expr))) "cu variabile" $
+  classify (size expr > 8) "expresie mare (>8 noduri)" $
   withEnv expr $ \env ->
     eval env (simplify expr) === eval env expr
 
 prop_prettyParsePreservesMeaning :: Expr -> Property
 prop_prettyParsePreservesMeaning expr =
+  classify (depth expr > 4) "adancime > 4" $
+  classify (operatorCount expr == 0) "expresie terminala" $
   withEnv expr $ \env ->
     case parseExpr (pretty expr) of
       Nothing ->
-        counterexample ("Parser failed for: " ++ pretty expr) False
+        counterexample ("Parser a esuat pentru: " ++ pretty expr) False
       Just parsed ->
         eval env parsed === eval env expr
 
@@ -133,6 +139,8 @@ prop_simplifyDoesNotIncreaseOperators expr =
 
 prop_addCommutative :: Expr -> Expr -> Property
 prop_addCommutative a b =
+  classify (size a + size b <= 3) "expresii mici" $
+  classify (size a + size b > 8) "expresii mari" $
   withEnv (Add a b) $ \env ->
     eval env (Add a b) === eval env (Add b a)
 
@@ -163,6 +171,8 @@ prop_mulOneIdentity expr =
 
 prop_mulZeroAbsorbing :: Expr -> Property
 prop_mulZeroAbsorbing expr =
+  classify (Set.null (freeVars expr)) "fara variabile" $
+  classify (not (Set.null (freeVars expr))) "cu variabile" $
   withEnv expr $ \env ->
     eval env (Mul expr (Const 0)) === Just 0
 
@@ -182,32 +192,34 @@ prop_substituteClosedPreservesMeaning expr =
     withEnv expr $ \env ->
       case eval env closedReplacement of
         Nothing ->
-          counterexample "Closed expression should always evaluate." False
+          counterexample "Expresia inchisa ar trebui sa fie intotdeauna evaluabila." False
         Just value ->
           let env' = Map.insert "x" value env
            in eval env (substitute "x" closedReplacement expr) === eval env' expr
 
 runProperty :: Testable prop => String -> prop -> IO ()
-runProperty name prop = do
-  putStrLn ("-- " ++ name)
+runProperty descriere prop = do
+  putStrLn ("-- " ++ descriere)
   quickCheckWith stdArgs {maxSuccess = 120, maxSize = 12} prop
   putStrLn ""
 
 main :: IO ()
 main = do
-  runProperty "prop_simplifyPreservesMeaning" prop_simplifyPreservesMeaning
-  runProperty "prop_prettyParsePreservesMeaning" prop_prettyParsePreservesMeaning
-  runProperty "prop_simplifyIdempotent" prop_simplifyIdempotent
-  runProperty "prop_simplifyDoesNotIncreaseSize" prop_simplifyDoesNotIncreaseSize
-  runProperty "prop_simplifyDoesNotIncreaseDepth" prop_simplifyDoesNotIncreaseDepth
-  runProperty "prop_simplifyDoesNotIncreaseOperators" prop_simplifyDoesNotIncreaseOperators
-  runProperty "prop_addCommutative" prop_addCommutative
-  runProperty "prop_mulCommutative" prop_mulCommutative
-  runProperty "prop_addAssociative" prop_addAssociative
-  runProperty "prop_mulAssociative" prop_mulAssociative
-  runProperty "prop_addZeroIdentity" prop_addZeroIdentity
-  runProperty "prop_mulOneIdentity" prop_mulOneIdentity
-  runProperty "prop_mulZeroAbsorbing" prop_mulZeroAbsorbing
-  runProperty "prop_subSelfZero" prop_subSelfZero
-  runProperty "prop_doubleNegation" prop_doubleNegation
-  runProperty "prop_substituteClosedPreservesMeaning" prop_substituteClosedPreservesMeaning
+  putStrLn "=== Testare QuickCheck: Mini-limbaj de expresii aritmetice ==="
+  putStrLn ""
+  runProperty "Simplificarea pastreaza semantica" prop_simplifyPreservesMeaning
+  runProperty "Pretty-print urmat de parsare pastreaza semantica" prop_prettyParsePreservesMeaning
+  runProperty "Simplificarea este idempotenta" prop_simplifyIdempotent
+  runProperty "Simplificarea nu mareste dimensiunea" prop_simplifyDoesNotIncreaseSize
+  runProperty "Simplificarea nu mareste adancimea" prop_simplifyDoesNotIncreaseDepth
+  runProperty "Simplificarea nu mareste numarul de operatori" prop_simplifyDoesNotIncreaseOperators
+  runProperty "Adunarea este comutativa" prop_addCommutative
+  runProperty "Inmultirea este comutativa" prop_mulCommutative
+  runProperty "Adunarea este asociativa" prop_addAssociative
+  runProperty "Inmultirea este asociativa" prop_mulAssociative
+  runProperty "0 este element neutru la adunare" prop_addZeroIdentity
+  runProperty "1 este element neutru la inmultire" prop_mulOneIdentity
+  runProperty "0 este element absorbant la inmultire" prop_mulZeroAbsorbing
+  runProperty "Scaderea unui termen cu el insusi da 0" prop_subSelfZero
+  runProperty "Dubla negatie este identitate" prop_doubleNegation
+  runProperty "Substitutia pastreaza semantica" prop_substituteClosedPreservesMeaning

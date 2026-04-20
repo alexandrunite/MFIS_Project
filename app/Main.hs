@@ -34,5 +34,5 @@ main = do
     Nothing ->
       putStrLn "Parser: eroare la parsarea expresiei pretty-printed"
     Just parsed -> do
-      putStrLn ("Parser(pretty expr): " ++ pretty parsed)
+      putStrLn ("Expresie parsata din text: " ++ pretty parsed)
       putStrLn ("Semantica pastrata: " ++ show (eval demoEnv parsed == eval demoEnv demoExpr))
