@@ -133,7 +133,7 @@ Add (Var "x") (Const 0)
 ## Slide 7 — Cele 16 proprietati (grupate)
 
 **Corectitudine semantica:**
-- Simplificarea pastreaza semantica
+- Simplificarea pastreaza semantica in medii complete
 - Pretty-print urmat de parsare pastreaza semantica
 
 **Structurale:**
@@ -158,7 +158,7 @@ Add (Var "x") (Const 0)
 
 ---
 
-## Slide 8 — Output real cu classify
+## Slide 8 — Exemplu de output cu classify
 
 ```
 -- Simplificarea pastreaza semantica
@@ -178,6 +178,8 @@ Add (Var "x") (Const 0)
 34.2% fara variabile
 ```
 
+Procentele pot varia intre rulari, deoarece QuickCheck genereaza date aleatorii.
+Proprietatea de simplificare este verificata in medii complete, construite cu `genEnvFor`.
 `classify` confirma ca generatorul produce o distributie echilibrata:
 atat expresii mici cat si mari, cu si fara variabile.
 
@@ -193,7 +195,7 @@ atat expresii mici cat si mari, cu si fara variabile.
 **Limitari observate:**
 - proprietatile trebuie formulate corect (o proprietate gresita trece mereu)
 - un generator prost testeaza doar cazuri banale — de aceea generatoarele sunt scrise manual
-- `Maybe` introduce evaluari partiale, rezolvata prin `genEnvFor`
+- `Maybe` introduce evaluari partiale; proprietatile semantice folosesc medii complete prin `genEnvFor`
 
 ---
 

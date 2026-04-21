@@ -18,7 +18,7 @@ In loc sa spunem doar "programul pare sa functioneze", formulam:
 
 In acest proiect, expresiile aritmetice sunt descrise printr-un tip de date algebric, iar comportamentul lor este verificat prin proprietati formale precum:
 
-- simplificarea pastreaza semantica
+- simplificarea pastreaza semantica in medii complete
 - adunarea este comutativa la evaluare
 - inmultirea cu 0 este absorbanta
 
@@ -161,9 +161,11 @@ Au fost implementate 16 proprietati, grupate logic:
 
 ### Corectitudine semantica
 
+Proprietatile semantice sunt formulate pentru medii complete: `genEnvFor` construieste un `Env` care contine toate variabilele libere ale expresiei. Aceasta preconditie este importanta deoarece evaluatorul intoarce `Nothing` pentru variabile lipsa.
+
 | Proprietate | Descriere |
 |---|---|
-| `prop_simplifyPreservesMeaning` | Simplificarea nu schimba valoarea expresiei |
+| `prop_simplifyPreservesMeaning` | Simplificarea nu schimba valoarea expresiei in medii complete |
 | `prop_prettyParsePreservesMeaning` | `parse(pretty(e))` evalueaza la acelasi rezultat ca `e` |
 
 ### Proprietati structurale
@@ -209,7 +211,9 @@ Au fost implementate 16 proprietati, grupate logic:
 
 Fiecare proprietate este rulata cu 120 de cazuri de test (`maxSuccess = 120`) si expresii de marime maxima 12 (`maxSize = 12`).
 
-Output-ul real al proiectului:
+Exemplu de output al proiectului. Procentele afisate de `classify` pot varia intre rulari, deoarece QuickCheck genereaza date aleatorii; important este ca proprietatile trec si ca distributia cazurilor nu este triviala.
+
+Linia "Simplificarea pastreaza semantica" trebuie citita cu preconditia folosita in test: expresia este evaluata intr-un mediu complet, generat cu `genEnvFor`.
 
 ```
 === Testare QuickCheck: Mini-limbaj de expresii aritmetice ===

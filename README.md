@@ -2,7 +2,7 @@
 
 Proiect pentru Metode Formale in Ingineria Software (tema 20): testarea property-based a unui modul software scris in Haskell, folosind QuickCheck.
 
-Modulul testat este un mini-limbaj de expresii aritmetice. Proprietatile formale verifica semantica, simplificarea algebrica si round-trip-ul prin pretty-printer si parser.
+Modulul testat este un mini-limbaj de expresii aritmetice. Proprietatile formale verifica semantica in medii complete, simplificarea algebrica si round-trip-ul prin pretty-printer si parser.
 
 ## Structura proiectului
 
@@ -84,7 +84,7 @@ Semantica pastrata: True
 cabal test
 ```
 
-Output exemplu:
+Output exemplu (procentele raportate de `classify` pot varia intre rulari):
 ```
 === Testare QuickCheck: Mini-limbaj de expresii aritmetice ===
 
@@ -110,9 +110,11 @@ cabal test spec --test-show-details=direct
 
 ## Proprietatile testate
 
+Proprietatile semantice sunt rulate cu medii complete, generate automat pe baza variabilelor libere din expresie. Astfel, `eval` compara valori reale (`Just n`), nu esecuri cauzate de variabile lipsa.
+
 | Grupare | Proprietate |
 |---|---|
-| Corectitudine semantica | Simplificarea pastreaza semantica |
+| Corectitudine semantica | Simplificarea pastreaza semantica in medii complete |
 | Corectitudine semantica | Pretty-print + parsare pastreaza semantica |
 | Structurale | Simplificarea este idempotenta |
 | Structurale | Simplificarea nu mareste dimensiunea / adancimea / nr. operatori |

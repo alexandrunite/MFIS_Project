@@ -40,7 +40,7 @@ Acest stil este util, dar acopera doar cazurile la care ne-am gandit in avans.
 **Property-based testing:**
 
 ```text
-Pentru orice expresii a, b si orice mediu valid env:
+Pentru orice expresii a, b si orice mediu complet env:
   eval env (Add a b) == eval env (Add b a)
 ```
 
@@ -150,7 +150,7 @@ Plus evaluare constanta locala:
 - `Const a + Const b -> Const (a+b)`
 - `Const a * Const b -> Const (a*b)` etc.
 
-**Mesaj cheie:** simplificatorul este deterministic si orientat pe conservarea semanticii.
+**Mesaj cheie:** simplificatorul este deterministic si conserva semantica pentru evaluari in medii complete.
 
 ---
 
@@ -237,7 +237,7 @@ Cu shrink: contraexemplu scurt, usor de localizat in cod.
 ## Slide 13 — Cele 16 proprietati (grupare completa)
 
 1. **Corectitudine semantica:**
-- simplificarea pastreaza semantica;
+- simplificarea pastreaza semantica in medii complete;
 - pretty + parse pastreaza semantica.
 
 2. **Structurale:**
@@ -261,7 +261,7 @@ Cu shrink: contraexemplu scurt, usor de localizat in cod.
 
 ---
 
-## Slide 14 — Rezultate experimentale (output)
+## Slide 14 — Rezultate experimentale (exemplu de output)
 
 Setari de rulare:
 
@@ -269,7 +269,7 @@ Setari de rulare:
 quickCheckWith stdArgs {maxSuccess = 120, maxSize = 12}
 ```
 
-Exemple de output:
+Exemple de output. Procentele pot varia intre rulari, deoarece QuickCheck genereaza date aleatorii:
 
 ```text
 +++ OK, passed 120 tests:
@@ -303,6 +303,7 @@ Exemple de output:
 
 - o proprietate gresit formulata poate trece mereu;
 - calitatea depinde de generator;
+- proprietatile semantice necesita medii complete cand expresiile contin variabile;
 - QuickCheck completeaza, nu inlocuieste demonstratia formala.
 
 **Mesaj cheie:** eficienta metodei depinde de calitatea specificatiilor si a generatorilor.
@@ -430,11 +431,11 @@ In `main` sunt apelate cele 16 proprietati grupate logic (semantice, structurale
 
 ---
 
-## Slide 22 — Rezultate reale din rularea curenta `spec.exe`
+## Slide 22 — Exemplu de rezultate din `spec.exe`
 
-Exemplu de output obtinut local:
+Exemplu de output obtinut local. Procentele de mai jos sunt orientative si pot varia intre rulari:
 
-- `Simplificarea pastreaza semantica`: `68.3%` cu variabile, `31.7%` fara variabile
+- `Simplificarea pastreaza semantica in medii complete`: `68.3%` cu variabile, `31.7%` fara variabile
 - `Pretty/Parse`: `28.3%` expresie terminala, `24.2%` adancime `> 4`
 - `Adunarea comutativa`: `52.5%` expresii mari, `16.7%` expresii mici
 - `0 absorbant la inmultire`: `68.3%` cu variabile, `31.7%` fara variabile
