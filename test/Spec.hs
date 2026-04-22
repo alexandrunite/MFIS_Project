@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -Wno-orphans #-}
 module Main where
 
+import Data.Maybe (isNothing)
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 
@@ -215,6 +216,27 @@ prop_substituteClosedPreservesMeaning expr =
           let env' = Map.insert "x" value env
            in eval env (substitute "x" closedReplacement expr) === eval env' expr
 
+-- ===== Comportament partial (Nothing) =====
+
+-- Orice variabila evaluata intr-un mediu gol returneaza Nothing
+prop_varInEmptyEnvIsNothing :: String -> Bool
+prop_varInEmptyEnvIsNothing name =
+  isNothing (eval emptyEnv (Var name))
+
+-- O expresie care contine cel putin o variabila esueaza in mediu gol
+prop_exprWithVarsInEmptyEnvIsNothing :: Expr -> Property
+prop_exprWithVarsInEmptyEnvIsNothing expr =
+  not (Set.null (freeVars expr)) ==>
+    eval emptyEnv expr === Nothing
+
+-- Stergerea unei variabile libere dintr-un mediu complet cauzeaza Nothing
+prop_missingVarCausesNothing :: Expr -> Property
+prop_missingVarCausesNothing expr =
+  not (Set.null (freeVars expr)) ==>
+    let someVar = Set.findMin (freeVars expr)
+     in forAll (genEnvFor expr) $ \env ->
+          eval (Map.delete someVar env) expr === Nothing
+
 -- Folosim aceleasi setari QuickCheck pentru comparatie intre proprietati
 runProperty :: Testable prop => String -> prop -> IO ()
 runProperty descriere prop = do
@@ -242,3 +264,6 @@ main = do
   runProperty "Scaderea unui termen cu el insusi da 0" prop_subSelfZero
   runProperty "Dubla negatie este identitate" prop_doubleNegation
   runProperty "Substitutia pastreaza semantica" prop_substituteClosedPreservesMeaning
+  runProperty "Variabila in mediu gol returneaza Nothing" prop_varInEmptyEnvIsNothing
+  runProperty "Expresie cu variabile in mediu gol returneaza Nothing" prop_exprWithVarsInEmptyEnvIsNothing
+  runProperty "Variabila lipsa din mediu cauzeaza Nothing" prop_missingVarCausesNothing

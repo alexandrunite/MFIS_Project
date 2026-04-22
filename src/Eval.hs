@@ -1,3 +1,6 @@
+-- liftA2 e in Prelude doar din GHC 9.6 (base 4.18); importul explicit
+-- pastreaza compatibilitatea cu GHC < 9.6.
+{-# OPTIONS_GHC -Wno-unused-imports #-}
 module Eval
   ( Env
   , emptyEnv
@@ -6,6 +9,7 @@ module Eval
   , eval
   ) where
 
+import Control.Applicative (liftA2)
 import Data.Map.Strict (Map)
 import qualified Data.Map.Strict as Map
 
