@@ -21,8 +21,8 @@ runExpr input varBindings = do
           simplified = simplify expr
       putStrLn ("  Original:    " ++ pretty expr)
       putStrLn ("  Simplificat: " ++ pretty simplified)
-      putStrLn ("  Dimensiune:  " ++ show (size expr) ++ " → " ++ show (size simplified))
-      putStrLn ("  Adancime:    " ++ show (depth expr) ++ " → " ++ show (depth simplified))
+      putStrLn ("  Dimensiune:  " ++ show (size expr) ++ " -> " ++ show (size simplified))
+      putStrLn ("  Adancime:    " ++ show (depth expr) ++ " -> " ++ show (depth simplified))
       let fv = Set.toList (freeVars expr)
       if null fv
         then do
@@ -64,6 +64,6 @@ main = do
 
     -- mod demo: cabal run mfis-quickcheck-expr
     [] -> do
-      putStrLn "Mod demo — ruleaza pe expresii predefinite.\n"
+      putStrLn "Mod demo - ruleaza pe expresii predefinite.\n"
       putStrLn "---"
       mapM_ (uncurry runExpr) demoExpresii

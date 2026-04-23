@@ -24,7 +24,7 @@ genSmallInt =
     , (1, chooseInt (-12, 12))
     ]
 
--- Expresiile inchise nu depind de niciun mediu extern
+-- Expresiile inchise (nu contin variabile) nu depind de niciun mediu extern
 genClosedExpr :: Gen Expr
 genClosedExpr = sized go
   where
@@ -99,6 +99,8 @@ shrinkExpr expr =
         ++ [Mul a' b | a' <- shrinkExpr a]
         ++ [Mul a b' | b' <- shrinkExpr b]
 
+-- Genereaza un mediu de evaluare complet pentru expresia data:
+-- gaseste toate variabilele libere si le asociaza valori Int aleatorii.
 genEnvFor :: Expr -> Gen Env
 genEnvFor expr = do
   let names = Set.toList (freeVars expr)
@@ -111,6 +113,8 @@ withEnv expr = forAll (genEnvFor expr)
 
 -- ===== Corectitudine semantica =====
 
+-- Verifica faptul ca simplificarea schimba doar forma expresiei,
+-- nu si valoarea ei calculata.
 prop_simplifyPreservesMeaning :: Expr -> Property
 prop_simplifyPreservesMeaning expr =
   classify (Set.null (freeVars expr)) "fara variabile" $
@@ -119,6 +123,8 @@ prop_simplifyPreservesMeaning expr =
   withEnv expr $ \env ->
     eval env (simplify expr) === eval env expr
 
+-- Verifica faptul ca o expresie afisata cu pretty poate fi parsata inapoi
+-- si ramane echivalenta ca valoare.
 prop_prettyParsePreservesMeaning :: Expr -> Property
 prop_prettyParsePreservesMeaning expr =
   classify (depth expr > 4) "adancime > 4" $
@@ -132,24 +138,30 @@ prop_prettyParsePreservesMeaning expr =
 
 -- ===== Proprietati structurale ale simplificarii =====
 
+-- Verifica faptul ca dupa ce o expresie a fost simplificata,
+-- o a doua simplificare nu mai schimba rezultatul.
 prop_simplifyIdempotent :: Expr -> Bool
 prop_simplifyIdempotent expr =
   simplify (simplify expr) == simplify expr
 
+-- Verifica faptul ca simplificarea nu produce un AST cu mai multe noduri.
 prop_simplifyDoesNotIncreaseSize :: Expr -> Bool
 prop_simplifyDoesNotIncreaseSize expr =
   size (simplify expr) <= size expr
 
+-- Verifica faptul ca simplificarea nu face arborele expresiei mai adanc.
 prop_simplifyDoesNotIncreaseDepth :: Expr -> Bool
 prop_simplifyDoesNotIncreaseDepth expr =
   depth (simplify expr) <= depth expr
 
+-- Verifica faptul ca simplificarea nu introduce operatori in plus.
 prop_simplifyDoesNotIncreaseOperators :: Expr -> Bool
 prop_simplifyDoesNotIncreaseOperators expr =
   operatorCount (simplify expr) <= operatorCount expr
 
 -- ===== Comutativitate si asociativitate =====
 
+-- Verifica comutativitatea adunarii: a + b are aceeasi valoare ca b + a.
 prop_addCommutative :: Expr -> Expr -> Property
 prop_addCommutative a b =
   classify (size a + size b <= 3) "expresii mici" $
@@ -157,16 +169,19 @@ prop_addCommutative a b =
   withEnv (Add a b) $ \env ->
     eval env (Add a b) === eval env (Add b a)
 
+-- Verifica comutativitatea inmultirii: a * b are aceeasi valoare ca b * a.
 prop_mulCommutative :: Expr -> Expr -> Property
 prop_mulCommutative a b =
   withEnv (Mul a b) $ \env ->
     eval env (Mul a b) === eval env (Mul b a)
 
+-- Verifica asociativitatea adunarii: (a + b) + c este echivalent cu a + (b + c).
 prop_addAssociative :: Expr -> Expr -> Expr -> Property
 prop_addAssociative a b c =
   withEnv (Add (Add a b) c) $ \env ->
     eval env (Add (Add a b) c) === eval env (Add a (Add b c))
 
+-- Verifica asociativitatea inmultirii: (a * b) * c este echivalent cu a * (b * c).
 prop_mulAssociative :: Expr -> Expr -> Expr -> Property
 prop_mulAssociative a b c =
   withEnv (Mul (Mul a b) c) $ \env ->
@@ -174,16 +189,19 @@ prop_mulAssociative a b c =
 
 -- ===== Elemente neutre si absorbante =====
 
+-- Verifica faptul ca 0 este element neutru la adunare: expr + 0 = expr.
 prop_addZeroIdentity :: Expr -> Property
 prop_addZeroIdentity expr =
   withEnv expr $ \env ->
     eval env (Add expr (Const 0)) === eval env expr
 
+-- Verifica faptul ca 1 este element neutru la inmultire: expr * 1 = expr.
 prop_mulOneIdentity :: Expr -> Property
 prop_mulOneIdentity expr =
   withEnv expr $ \env ->
     eval env (Mul expr (Const 1)) === eval env expr
 
+-- Verifica faptul ca 0 este element absorbant la inmultire: expr * 0 = 0.
 prop_mulZeroAbsorbing :: Expr -> Property
 prop_mulZeroAbsorbing expr =
   classify (Set.null (freeVars expr)) "fara variabile" $
@@ -193,11 +211,13 @@ prop_mulZeroAbsorbing expr =
 
 -- ===== Negatie si scadere =====
 
+-- Verifica faptul ca scaderea unei expresii din ea insasi da intotdeauna 0.
 prop_subSelfZero :: Expr -> Property
 prop_subSelfZero expr =
   withEnv expr $ \env ->
     eval env (Sub expr expr) === Just 0
 
+-- Verifica faptul ca dubla negatie nu schimba valoarea expresiei: -(-expr) = expr.
 prop_doubleNegation :: Expr -> Property
 prop_doubleNegation expr =
   withEnv expr $ \env ->
@@ -205,6 +225,8 @@ prop_doubleNegation expr =
 
 -- ===== Substitutie =====
 
+-- Verifica faptul ca substitutia lui x cu o expresie inchisa este echivalenta
+-- cu evaluarea expresiei initiale intr-un mediu unde x are valoarea acelei expresii.
 prop_substituteClosedPreservesMeaning :: Expr -> Property
 prop_substituteClosedPreservesMeaning expr =
   forAll genClosedExpr $ \closedReplacement ->
@@ -229,7 +251,8 @@ prop_exprWithVarsInEmptyEnvIsNothing expr =
   not (Set.null (freeVars expr)) ==>
     eval emptyEnv expr === Nothing
 
--- Stergerea unei variabile libere dintr-un mediu complet cauzeaza Nothing
+-- Verifica faptul ca daca stergem din mediu o variabila folosita de expresie,
+-- evaluarea expresiei esueaza cu Nothing.
 prop_missingVarCausesNothing :: Expr -> Property
 prop_missingVarCausesNothing expr =
   not (Set.null (freeVars expr)) ==>

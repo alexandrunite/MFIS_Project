@@ -1,5 +1,3 @@
--- liftA2 e in Prelude doar din GHC 9.6 (base 4.18); importul explicit
--- pastreaza compatibilitatea cu GHC < 9.6.
 {-# OPTIONS_GHC -Wno-unused-imports #-}
 module Eval
   ( Env
@@ -27,7 +25,7 @@ singletonEnv = Map.singleton
 fromListEnv :: [(VarName, Int)] -> Env
 fromListEnv = Map.fromList
 
--- Evaluator sigur: intoarce Nothing daca o variabila nu are valoare
+-- intoarce Nothing daca o variabila nu are valoare
 eval :: Env -> Expr -> Maybe Int
 eval env expr =
   case expr of
